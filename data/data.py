@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 # Parameters
-n_rows = 1_000_000
+n_rows = 10_000_000
 
 # 1. ATM Card Numbers
 # BIN codes for major Vietnamese banks

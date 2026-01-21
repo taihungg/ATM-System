@@ -74,6 +74,8 @@ public class ATMService {
     }
 
     public boolean withdraw(long amount) {
+        long startTime = System.nanoTime();
+
         if (currentAccount == null || amount > currentAccount.getBalance()) {
             System.out.println("Tai khoan khong du tien!");
             return false;
@@ -104,6 +106,9 @@ public class ATMService {
         currentAccount.setBalance(currentAccount.getBalance() - amount);
         System.out.println("Rut tien thanh cong! (Thuat toan Quay lui)");
         System.out.println("Chi tiet: " + log.toString());
+
+        long endTime = System.nanoTime();
+        printTime("Rut tien (BackTracking) ", startTime, endTime);
         return true;
     }
 
