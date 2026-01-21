@@ -1,6 +1,6 @@
 package model;
 
-public class Account {
+public class Account implements Comparable<Account>{
     private String id;
     private String pin;
     private long balance;
@@ -18,6 +18,11 @@ public class Account {
     public long getBalance() { return balance; }
     public void setBalance(long balance) { this.balance = balance; }
     public String getName() { return name; }
+
+    @Override
+    public int compareTo(Account other) {
+        return this.id.compareTo(other.id);
+    }
 
     @Override
     public String toString() {

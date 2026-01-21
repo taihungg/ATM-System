@@ -1,6 +1,8 @@
 package service;
 
 import model.Account;
+
+import java.util.Collections;
 import java.util.List;
 
 public class ATMService {
@@ -9,13 +11,28 @@ public class ATMService {
 
     public ATMService(List<Account> accounts) {
         this.accounts = accounts;
+
+        System.out.println("\n[BENCHMARK] Bat dau sap xep " + accounts.size() + " tai khoan theo ID...");
+        long startTime = System.nanoTime();
+        
+        Collections.sort(this.accounts);
+        
+        long endTime = System.nanoTime();
+        printTime("Sap xep (TimSort)", startTime, endTime);
     }
 
-    private Account findAccountById(String id) {
-        for (Account acc : accounts) {
-            if (acc.getId().equals(id)) {
-                return acc;
-            }
+    public Account findAccountById(String id) {
+        Account searchKey = new Account(id, "", 0, "");
+        
+        long startTime = System.nanoTime();
+        
+        int index = Collections.binarySearch(accounts, searchKey);
+        
+        long endTime = System.nanoTime();
+        
+        if (index >= 0) {
+            printTime("Tim kiem (Binary Search) ID " + id, startTime, endTime);
+            return accounts.get(index);
         }
         return null;
     }
@@ -23,7 +40,7 @@ public class ATMService {
     public boolean login(String id, String pin) {
         Account acc = findAccountById(id);
         if (acc != null && acc.getPin().equals(pin)) {
-            this.currentAccount = acc;
+            currentAccount = acc;
             return true;
         }
         return false;
@@ -38,18 +55,36 @@ public class ATMService {
     }
 
     public boolean withdraw(long amount) {
-        if (currentAccount == null) return false;
-        if (amount > currentAccount.getBalance()) {
-            System.out.println("So du khong du!");
-            return false;
-        }
-        if (amount % 50000 != 0) {
-            System.out.println("So tien phai la boi cua 50,000!");
-            return false;
-        }
+        if (currentAccount == null || amount > currentAccount.getBalance()) return false;
+        
+        long startTime = System.nanoTime();
+        
+        int[] denominations = {500000, 200000, 100000, 50000};
+        if (amount % 50000 != 0) return false;
 
+        long tempAmount = amount;
+        StringBuilder log = new StringBuilder();
+        
+        for (int note : denominations) {
+            if (tempAmount >= note) {
+                long count = tempAmount / note;
+                tempAmount = tempAmount % note;
+                log.append(note).append("x").append(count).append("; ");
+            }
+        }
+        
+        long endTime = System.nanoTime();
+        printTime("Thuat toan Tham lam (Greedy)", startTime, endTime);
+        
+        System.out.println("Chi tiet tien nhan duoc: " + log.toString());
         currentAccount.setBalance(currentAccount.getBalance() - amount);
         return true;
+    }
+
+    private void printTime(String algoName, long start, long end) {
+        long durationNano = end - start;
+        double durationMs = durationNano / 1_000_000.0;
+        System.out.printf(">> [THOI GIAN] %-30s: %d ns (%.4f ms)\n", algoName, durationNano, durationMs);
     }
 
     public boolean transfer(String targetId, long amount) {
