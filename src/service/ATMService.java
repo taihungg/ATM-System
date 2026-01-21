@@ -12,7 +12,7 @@ public class ATMService {
     public ATMService(List<Account> accounts) {
         this.accounts = accounts;
 
-        System.out.println("\n[BENCHMARK] Bat dau sap xep " + accounts.size() + " tai khoan theo ID...");
+        System.out.println("\n[BENCHMARK] Bat dau sap xep " + accounts.size() + " tai khoan theo so the...");
         long startTime = System.nanoTime();
         
         Collections.sort(this.accounts);
@@ -21,8 +21,8 @@ public class ATMService {
         printTime("Sap xep (TimSort)", startTime, endTime);
     }
 
-    public Account findAccountById(String id) {
-        Account searchKey = new Account(id, "", 0, "");
+    public Account findAccountByCardNumber(String cardNumber) {
+        Account searchKey = new Account(cardNumber, "", 0, "");
         
         long startTime = System.nanoTime();
         
@@ -31,14 +31,14 @@ public class ATMService {
         long endTime = System.nanoTime();
         
         if (index >= 0) {
-            printTime("Tim kiem (Binary Search) ID " + id, startTime, endTime);
+            printTime("Tim kiem (Binary Search) so the " + cardNumber, startTime, endTime);
             return accounts.get(index);
         }
         return null;
     }
 
-    public boolean login(String id, String pin) {
-        Account acc = findAccountById(id);
+    public boolean login(String cardNumber, String pin) {
+        Account acc = findAccountByCardNumber(cardNumber);
         if (acc != null && acc.getPin().equals(pin)) {
             currentAccount = acc;
             return true;
@@ -87,9 +87,9 @@ public class ATMService {
         System.out.printf(">> [THOI GIAN] %-30s: %d ns (%.4f ms)\n", algoName, durationNano, durationMs);
     }
 
-    public boolean transfer(String targetId, long amount) {
+    public boolean transfer(String targetcardNumber, long amount) {
         if (currentAccount == null) return false;
-        Account target = findAccountById(targetId);
+        Account target = findAccountByCardNumber(targetcardNumber);
 
         if (target == null) {
             System.out.println("Tai khoan dich khong ton tai!");

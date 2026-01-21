@@ -24,15 +24,15 @@ public class ConsoleUI {
 
     private void showLoginMenu() {
         System.out.println("\n=== CHAO MUNG DEN VOI ATM ===");
-        System.out.print("Nhap ID: ");
-        String id = scanner.nextLine();
+        System.out.print("Nhap so the: ");
+        String cardNumber = scanner.nextLine();
         System.out.print("Nhap PIN: ");
         String pin = scanner.nextLine();
 
-        if (service.login(id, pin)) {
+        if (service.login(cardNumber, pin)) {
             System.out.println("Dang nhap thanh cong! Xin chao " + service.getCurrentAccount().getName());
         } else {
-            System.out.println("Sai ID hoac PIN!");
+            System.out.println("Sai so the hoac PIN!");
         }
     }
 
@@ -58,11 +58,11 @@ public class ConsoleUI {
                 }
                 break;
             case 3:
-                System.out.print("Nhap ID nguoi nhan: ");
-                String targetId = scanner.nextLine();
+                System.out.print("Nhap so the nguoi nhan: ");
+                String targetCardNumber = scanner.nextLine();
                 System.out.print("Nhap so tien: ");
                 long transferAmount = Long.parseLong(scanner.nextLine());
-                if (service.transfer(targetId, transferAmount)) {
+                if (service.transfer(targetCardNumber, transferAmount)) {
                     System.out.println("Chuyen khoan thanh cong!");
                 } else {
                     System.out.println("Giao dich that bai.");
