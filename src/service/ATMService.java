@@ -12,6 +12,7 @@ public class ATMService {
     private Account currentAccount = null;
 
     private Map<Integer, Integer> cashDispenser;
+    private static final int[] DENOMINATIONS = {500000, 200000, 100000, 50000};
 
     public ATMService(List<Account> accounts, Map<Integer, Integer> cashDispenser) {
         this.accounts = accounts;
@@ -82,50 +83,51 @@ public class ATMService {
             return false;
         }
 
-        long totalInATM = 0;
-        for (Map.Entry<Integer, Integer> entry : cashDispenser.entrySet()) {
-            totalInATM += (long) entry.getKey() * entry.getValue();
-        }
-        if (amount > totalInATM) {
-            System.out.println("Loi: May ATM tam thoi het tien (hoac khong du tien mat)!");
-            return false;
-        }
-        
         Map<Integer, Integer> plan = new HashMap<>();
-        long tempAmount = amount;
-        int[] denominations = {500000, 200000, 100000, 50000};
 
-        for (int note : denominations) {
-            if (tempAmount >= note) {
-                int neededCount = (int) (tempAmount / note);
-                int availableCount = cashDispenser.get(note);
-                
-                int takeCount = Math.min(neededCount, availableCount);
-                
-                if (takeCount > 0) {
-                    plan.put(note, takeCount);
-                    tempAmount -= (long) note * takeCount;
-                }
-            }
-        }
+        boolean success = backtrackSolve(0, amount, plan);
 
-        if (tempAmount > 0) {
-            System.out.println("Loi: May khong du menh gia phu hop de tra so tien nay (Thieu tien le).");
+        if (!success) {
+            System.out.println("Loi: May khong du menh gia phu hop de tra so tien nay.");
             return false;
         }
 
         StringBuilder log = new StringBuilder();
         for (Integer note : plan.keySet()) {
-            int take = plan.get(note);
-            cashDispenser.put(note, cashDispenser.get(note) - take); // Cập nhật kho
-            log.append(note).append("x").append(take).append("; ");
+            int count = plan.get(note);
+            if (count > 0) {
+                cashDispenser.put(note, cashDispenser.get(note) - count);
+                log.append(note).append("x").append(count).append("; ");
+            }
         }
 
         currentAccount.setBalance(currentAccount.getBalance() - amount);
-        
-        System.out.println("Rut tien thanh cong!");
+        System.out.println("Rut tien thanh cong! (Thuat toan Quay lui)");
         System.out.println("Chi tiet: " + log.toString());
         return true;
+    }
+
+    private boolean backtrackSolve(int index, long remainingAmount, Map<Integer, Integer> plan) {
+        if (remainingAmount == 0) return true;
+
+        if (index >= DENOMINATIONS.length) return false;
+
+        int note = DENOMINATIONS[index];
+        int availableInStock = cashDispenser.getOrDefault(note, 0);
+        int maxCount = (int) Math.min(remainingAmount / note, availableInStock);
+
+        for (int count = maxCount; count >= 0; count--) {
+            plan.put(note, count);
+
+            long newRemaining = remainingAmount - ((long) note * count);
+            
+            if (backtrackSolve(index + 1, newRemaining, plan)) {
+                return true;
+            }
+        }
+
+        plan.remove(note);
+        return false;
     }
 
     private void printTime(String algoName, long start, long end) {
