@@ -12,6 +12,7 @@ public class ATMService {
     private Account currentAccount = null;
 
     private Map<Integer, Integer> cashDispenser;
+    private static final int MAX_NOTES_PER_TRANSACTION = 40;
     private static final int[] DENOMINATIONS = {500000, 200000, 100000, 50000};
 
     public ATMService(List<Account> accounts, Map<Integer, Integer> cashDispenser) {
@@ -74,23 +75,39 @@ public class ATMService {
     }
 
     public boolean withdraw(long amount) {
-        long startTime = System.nanoTime();
-
-        if (currentAccount == null || amount > currentAccount.getBalance()) {
-            System.out.println("Tai khoan khong du tien!");
+        if (currentAccount == null) return false;
+        
+        if (amount > currentAccount.getBalance()) {
+            System.out.println("Giao dich that bai: So du khong du.");
             return false;
         }
+        
         if (amount % 50000 != 0) {
-            System.out.println("So tien phai la boi so cua 50.000!");
+            System.out.println("Giao dich that bai: So tien phai la boi so cua 50.000 VND.");
+            return false;
+        }
+
+        long totalInATM = 0;
+        for (Map.Entry<Integer, Integer> entry : cashDispenser.entrySet()) {
+            totalInATM += (long) entry.getKey() * entry.getValue();
+        }
+        if (amount > totalInATM) {
+            System.out.println("Loi: May ATM tam thoi khong du tien mat.");
             return false;
         }
 
         Map<Integer, Integer> plan = new HashMap<>();
 
-        boolean success = backtrackSolve(0, amount, plan);
+        long startTime = System.nanoTime();
+
+        boolean success = backtrackSolve(0, amount, plan, 0);
+
+        long endTime = System.nanoTime();
+
+        printTime("Tinh toan phuong an tra tien (Backtracking): ", startTime, endTime);
 
         if (!success) {
-            System.out.println("Loi: May khong du menh gia phu hop de tra so tien nay.");
+            System.out.println("Giao dich that bai: May khong du menh gia phu hop (hoac vuot qua gioi han 40 to/lan).");
             return false;
         }
 
@@ -104,33 +121,39 @@ public class ATMService {
         }
 
         currentAccount.setBalance(currentAccount.getBalance() - amount);
-        System.out.println("Rut tien thanh cong! (Thuat toan Quay lui)");
-        System.out.println("Chi tiet: " + log.toString());
 
-        long endTime = System.nanoTime();
-        printTime("Rut tien (BackTracking) ", startTime, endTime);
+        System.out.println("=== RUT TIEN THANH CONG ===");
+        System.out.println("Chi tiet: " + log.toString());
+        System.out.println("So du moi: " + String.format("%,d", currentAccount.getBalance()) + " VND");
+        
         return true;
     }
 
-    private boolean backtrackSolve(int index, long remainingAmount, Map<Integer, Integer> plan) {
+    private boolean backtrackSolve(int index, long remainingAmount, Map<Integer, Integer> plan, int currentTotalNotes) {
         if (remainingAmount == 0) return true;
+        if (currentTotalNotes > MAX_NOTES_PER_TRANSACTION) return false;
 
         if (index >= DENOMINATIONS.length) return false;
 
         int note = DENOMINATIONS[index];
         int availableInStock = cashDispenser.getOrDefault(note, 0);
-        int maxCount = (int) Math.min(remainingAmount / note, availableInStock);
+        int maxNeed = (int) (remainingAmount / note);
+        int limitByMechanic = MAX_NOTES_PER_TRANSACTION - currentTotalNotes;
+        int maxCount = Math.min(maxNeed, Math.min(availableInStock, limitByMechanic));
 
         for (int count = maxCount; count >= 0; count--) {
             plan.put(note, count);
+            boolean result = backtrackSolve(
+                index + 1, 
+                remainingAmount - ((long) note * count), 
+                plan, 
+                currentTotalNotes + count
+            );
 
-            long newRemaining = remainingAmount - ((long) note * count);
-            
-            if (backtrackSolve(index + 1, newRemaining, plan)) {
+            if (result) {
                 return true;
             }
         }
-
         plan.remove(note);
         return false;
     }
